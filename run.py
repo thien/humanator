@@ -73,14 +73,27 @@ def getMessages(conn):
 
 def printMessage(handle,contacts,message):
 	person = chatIdentifier(handle,contacts,message)
-	print(person,":", message['text'])
+	return (person, message['text'])
 
 def init(conn):
 	handle = getChatHandle(conn)
 	contacts = getContactDetails(conn)
 	messages = getMessages(conn)
+	metadata = {}
+
+	import spacy
+	nlp = spacy.load('en')
 
 	for i in messages:
-		printMessage(handle,contacts,i)
+		message = printMessage(handle,contacts,i)
+		message = (message[0],nlp(message[1]))
+		print(message)
+		metadata.setdefault(message[0],{})
+		metadata[message[0]].setdefault('entities',{})
+		for ent in message[1].ents:
+			metadata[message[0]]['entities'].setdefault(ent,[])
+			metadata[message[0]]['entities'][ent].append(ent.label_)
 
+	for i in metadata:
+		print(metadata[i]['entities'].keys())
 init(conn)
